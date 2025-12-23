@@ -16,25 +16,19 @@ interface SkillsListProps {
 
 export const SkillsList: React.FC<SkillsListProps> = ({
   skills,
-
   showDescriptions,
 }) => {
   const enabledSkills = skills
-
     .filter((s) => !s.disabled)
-
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const disabledSkills = skills
-
     .filter((s) => s.disabled)
-
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const renderSkill = (skill: SkillDefinition) => (
     <Box key={skill.name} flexDirection="row">
       <Text color={theme.text.primary}>{'  '}- </Text>
-
       <Box flexDirection="column">
         <Text
           bold
@@ -43,7 +37,6 @@ export const SkillsList: React.FC<SkillsListProps> = ({
         >
           {skill.name}
         </Text>
-
         {showDescriptions && skill.description && (
           <Box marginLeft={2}>
             <Text color={theme.text.secondary} dimColor={skill.disabled}>
@@ -62,9 +55,7 @@ export const SkillsList: React.FC<SkillsListProps> = ({
           <Text bold color={theme.text.primary}>
             Available Agent Skills:
           </Text>
-
           <Box height={1} />
-
           {enabledSkills.map(renderSkill)}
         </Box>
       )}
@@ -82,9 +73,7 @@ export const SkillsList: React.FC<SkillsListProps> = ({
           <Text bold color={theme.text.secondary} dimColor>
             Disabled Skills:
           </Text>
-
           <Box height={1} />
-
           {disabledSkills.map(renderSkill)}
         </Box>
       )}
