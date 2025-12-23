@@ -24,12 +24,12 @@ export class SkillManager {
   private activeSkillNames: Set<string> = new Set();
 
   /**
-   * Discovers skills in the provided paths and stores them.
+   * Discovered skills in the provided paths and adds them to the manager.
    * A skill is a directory containing a SKILL.md file at its root.
    */
   async discoverSkills(paths: string[]): Promise<SkillMetadata[]> {
     const discoveredSkills: SkillMetadata[] = [];
-    const seenLocations = new Set<string>();
+    const seenLocations = new Set(this.skills.map((s) => s.location));
 
     for (const searchPath of paths) {
       try {
@@ -66,7 +66,13 @@ export class SkillManager {
       }
     }
 
-    this.skills = discoveredSkills;
+    // Deduplicate by name, last one wins
+    const skillMap = new Map<string, SkillMetadata>();
+    for (const skill of [...this.skills, ...discoveredSkills]) {
+      skillMap.set(skill.name, skill);
+    }
+    this.skills = Array.from(skillMap.values());
+
     return discoveredSkills;
   }
 

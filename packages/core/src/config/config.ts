@@ -5,7 +5,6 @@
  */
 
 import * as path from 'node:path';
-import * as os from 'node:os';
 import { inspect } from 'node:util';
 import process from 'node:process';
 import type {
@@ -701,14 +700,6 @@ export class Config {
     this.promptRegistry = new PromptRegistry();
     this.resourceRegistry = new ResourceRegistry();
 
-    // Initialize SkillManager and discover skills
-    this.skillManager = new SkillManager();
-    const skillPaths = [
-      path.join(this.cwd, '.gemini', 'skills'),
-      path.join(os.homedir(), '.gemini', 'skills'),
-    ];
-    await this.skillManager.discoverSkills(skillPaths);
-
     this.agentRegistry = new AgentRegistry(this);
     await this.agentRegistry.initialize();
 
@@ -725,6 +716,21 @@ export class Config {
       await this.getExtensionLoader().start(this),
     ]);
     initMcpHandle?.end();
+
+    // Discover skills from user, project, and extensions
+    const skillPaths = [
+      Storage.getUserSkillsDir(),
+      this.storage.getProjectSkillsDir(),
+    ];
+
+    const activeExtensions = this.getExtensions()
+      .filter((ext) => ext.isActive)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    for (const ext of activeExtensions) {
+      skillPaths.push(path.join(ext.path, 'skills'));
+    }
+
+    await this.getSkillManager().discoverSkills(skillPaths);
 
     // Initialize hook system if enabled
     if (this.enableHooks) {

@@ -142,4 +142,38 @@ description: Skill
 
     expect(skills).toHaveLength(1);
   });
+
+  it('should deduplicate skills by name (last wins)', async () => {
+    const path1 = path.join(testRootDir, 'path1');
+    const path2 = path.join(testRootDir, 'path2');
+    await fs.mkdir(path1, { recursive: true });
+    await fs.mkdir(path2, { recursive: true });
+
+    await fs.mkdir(path.join(path1, 'skill'), { recursive: true });
+    await fs.writeFile(
+      path.join(path1, 'skill', 'SKILL.md'),
+      `---
+name: same-name
+description: First
+---
+`,
+    );
+
+    await fs.mkdir(path.join(path2, 'skill'), { recursive: true });
+    await fs.writeFile(
+      path.join(path2, 'skill', 'SKILL.md'),
+      `---
+name: same-name
+description: Second
+---
+`,
+    );
+
+    const service = new SkillManager();
+    await service.discoverSkills([path1, path2]);
+
+    const skills = service.getSkills();
+    expect(skills).toHaveLength(1);
+    expect(skills[0].description).toBe('Second');
+  });
 });
