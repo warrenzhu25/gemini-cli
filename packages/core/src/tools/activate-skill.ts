@@ -42,12 +42,12 @@ class ActivateSkillToolInvocation extends BaseToolInvocation<
     const skillName = this.params.name;
     const skill = this.config
       .getSkillManager()
-      .getSkills()
+      .getAllSkills()
       .find((s) => s.name === skillName);
     if (skill) {
-      return `Activate specialized agent skill "${skillName}": ${skill.description}`;
+      return `"${skillName}": ${skill.description}`;
     }
-    return `Activate specialized agent skill "${skillName}"`;
+    return `"${skillName}"`;
   }
 
   protected override async getConfirmationDetails(

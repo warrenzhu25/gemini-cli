@@ -23,15 +23,17 @@ describe('ActivateSkillTool', () => {
   } as unknown as MessageBus;
 
   beforeEach(() => {
+    const skills = [
+      {
+        name: 'test-skill',
+        description: 'A test skill',
+        location: '/path/to/test-skill/SKILL.md',
+      },
+    ];
     mockConfig = {
       getSkillManager: vi.fn().mockReturnValue({
-        getSkills: vi.fn().mockReturnValue([
-          {
-            name: 'test-skill',
-            description: 'A test skill',
-            location: '/path/to/test-skill/SKILL.md',
-          },
-        ]),
+        getSkills: vi.fn().mockReturnValue(skills),
+        getAllSkills: vi.fn().mockReturnValue(skills),
         getSkillContent: vi.fn().mockResolvedValue({
           name: 'test-skill',
           description: 'A test skill',
@@ -47,9 +49,7 @@ describe('ActivateSkillTool', () => {
   it('should return enhanced description', () => {
     const params = { name: 'test-skill' };
     const invocation = tool.build(params);
-    expect(invocation.getDescription()).toBe(
-      'Activate specialized agent skill "test-skill": A test skill',
-    );
+    expect(invocation.getDescription()).toBe('"test-skill": A test skill');
   });
 
   it('should return enhanced confirmation details', async () => {
