@@ -265,8 +265,8 @@ export class BrowserTools {
       if (!viewport) {
         return { error: 'Viewport not available', url: page.url() };
       }
-      const actualX = (x / 1000) * viewport.width;
-      const actualY = (y / 1000) * viewport.height;
+      const actualX = Math.round((x / 1000) * viewport.width);
+      const actualY = Math.round((y / 1000) * viewport.height);
 
       await this.moveMouse(page, actualX, actualY);
 
@@ -298,8 +298,8 @@ export class BrowserTools {
       if (!viewport) {
         return { error: 'Viewport not available', url: page.url() };
       }
-      const actualX = (x / 1000) * viewport.width;
-      const actualY = (y / 1000) * viewport.height;
+      const actualX = Math.round((x / 1000) * viewport.width);
+      const actualY = Math.round((y / 1000) * viewport.height);
 
       await this.moveMouse(page, actualX, actualY);
 
@@ -311,6 +311,8 @@ export class BrowserTools {
 
       await page.mouse.click(actualX, actualY);
       await this.animateClick(page);
+      // Small delay to let focus settle before typing
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       if (clearBeforeTyping) {
         await page.keyboard.press('Control+A');
@@ -321,7 +323,7 @@ export class BrowserTools {
       if (pressEnter) {
         await page.keyboard.press('Enter');
       }
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 300));
       await this.removeOverlay();
       return { output: `Typed "${text}"`, url: page.url() };
     } catch (e: unknown) {
@@ -346,10 +348,10 @@ export class BrowserTools {
       if (!viewport) {
         return { error: 'Viewport not available', url: page.url() };
       }
-      const actualX = (x / 1000) * viewport.width;
-      const actualY = (y / 1000) * viewport.height;
-      const actualDestX = (destX / 1000) * viewport.width;
-      const actualDestY = (destY / 1000) * viewport.height;
+      const actualX = Math.round((x / 1000) * viewport.width);
+      const actualY = Math.round((y / 1000) * viewport.height);
+      const actualDestX = Math.round((destX / 1000) * viewport.width);
+      const actualDestY = Math.round((destY / 1000) * viewport.height);
 
       await this.moveMouse(page, actualX, actualY);
       await page.mouse.move(actualX, actualY);
@@ -504,10 +506,5 @@ export class BrowserTools {
     const client = await this.browserManager.getMcpClient();
     await client.callTool('drag', { from_uid: fromUid, to_uid: toUid });
     return { output: 'Dragged element' };
-  }
-
-  // Deprecated: Use pressKey if possible, but keeping for coordinate-based/legacy support or where UID isn't known
-  async keyCombination(keys: string): Promise<ToolResult> {
-    return this.pressKey(keys);
   }
 }

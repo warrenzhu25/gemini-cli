@@ -13,6 +13,7 @@ import {
   type Tool,
   type FunctionCall,
   Type,
+  Environment,
 } from '@google/genai';
 import { GeminiChat, StreamEventType } from '../../core/geminiChat.js';
 import { parseThought } from '../../utils/thoughtUtils.js';
@@ -303,7 +304,33 @@ const semanticTools: Tool[] = [
 ];
 
 // Visual Tools (Delegate)
+// Uses computerUse built-in (required for computer-use model) but excludes ALL predefined functions.
+// We add our own custom function declarations to have full control over tool behavior.
 const visualTools: Tool[] = [
+  // ComputerUse built-in - required for the gemini-2.5-computer-use model
+  // Exclude ALL predefined functions so we can use our custom implementations
+  {
+    computerUse: {
+      environment: Environment.ENVIRONMENT_BROWSER,
+      // Exclude ALL predefined functions - we provide our own custom tools
+      excludedPredefinedFunctions: [
+        'open_web_browser',
+        'wait_5_seconds',
+        'go_back',
+        'go_forward',
+        'search',
+        'navigate',
+        'click_at',
+        'hover_at',
+        'type_text_at',
+        'key_combination',
+        'scroll_document',
+        'scroll_at',
+        'drag_and_drop',
+      ],
+    },
+  },
+  // Custom function declarations - matches working commit f5d2b5d exactly
   {
     functionDeclarations: [
       {
@@ -348,7 +375,7 @@ const visualTools: Tool[] = [
         },
       },
       {
-        name: 'press_key', // Also useful helper for visual agent
+        name: 'press_key',
         description:
           'Press a key or key combination (e.g., "Enter", "Control+A").',
         parameters: {
@@ -360,7 +387,7 @@ const visualTools: Tool[] = [
         },
       },
       {
-        name: 'scroll_document', // Scrolling might be needed
+        name: 'scroll_document',
         description: 'Scroll the document.',
         parameters: {
           type: Type.OBJECT,
@@ -381,6 +408,80 @@ const visualTools: Tool[] = [
   },
 ];
 
+/**
+ * Analyzes accessibility tree snapshot for common overlay patterns.
+ * Returns hints about detected overlays and suggested close buttons.
+ */
+function detectBlockingOverlays(snapshot: string): {
+  hasOverlay: boolean;
+  overlayInfo: string;
+  suggestedAction: string;
+} {
+  const lines = snapshot.split('\n');
+  const overlayRoles = ['dialog', 'alertdialog', 'tooltip'];
+  const closeButtonPatterns = [
+    'close',
+    'dismiss',
+    'got it',
+    'no thanks',
+    'accept',
+    'ok',
+    '×',
+    'x button',
+    'cancel',
+  ];
+
+  const overlayElements: string[] = [];
+  const closeButtons: Array<{ uid: string; text: string }> = [];
+
+  for (const line of lines) {
+    const lowerLine = line.toLowerCase();
+
+    // Detect overlay roles
+    for (const role of overlayRoles) {
+      if (
+        lowerLine.includes(`role="${role}"`) ||
+        lowerLine.includes(` ${role} `)
+      ) {
+        overlayElements.push(line.trim());
+        break;
+      }
+    }
+
+    // Look for aria-modal
+    if (lowerLine.includes('aria-modal="true"')) {
+      overlayElements.push(line.trim());
+    }
+
+    // Look for close buttons
+    const uidMatch = line.match(/uid=(\S+)/);
+    if (uidMatch) {
+      for (const closeText of closeButtonPatterns) {
+        if (
+          lowerLine.includes(closeText) &&
+          (lowerLine.includes('button') || lowerLine.includes('link'))
+        ) {
+          closeButtons.push({ uid: uidMatch[1], text: line.trim() });
+          break;
+        }
+      }
+    }
+  }
+
+  const hasOverlay = overlayElements.length > 0;
+
+  return {
+    hasOverlay,
+    overlayInfo:
+      overlayElements.length > 0
+        ? `Detected overlay elements:\n${overlayElements.slice(0, 3).join('\n')}`
+        : '',
+    suggestedAction:
+      closeButtons.length > 0
+        ? `Found potential close buttons: ${closeButtons.map((b) => `uid=${b.uid}`).join(', ')}`
+        : '',
+  };
+}
 export class BrowserAgent {
   private logger: BrowserLogger;
   private browserManager: BrowserManager;
@@ -412,6 +513,20 @@ Use these uid values directly with your tools:
 - click(uid="87_4") to click the Login button
 - fill(uid="87_2", value="john") to fill a text field
 - fill_form(elements=[{uid: "87_2", value: "john"}, {uid: "87_3", value: "pass"}]) to fill multiple fields at once
+
+PARALLEL TOOL CALLS - CRITICAL:
+- Do NOT make parallel calls for actions that change page state (click, fill, press_key, etc.)
+- Each action changes the DOM and invalidates UIDs from the current snapshot
+- Make state-changing actions ONE AT A TIME, then observe the results
+- For typing text, prefer press_key with the characters instead of clicking on-screen keyboard buttons
+
+OVERLAY/POPUP HANDLING:
+Before interacting with page content, scan the accessibility tree for blocking overlays:
+- Tooltips, popups, modals, cookie banners, newsletter prompts, promo dialogs
+- These often have: close buttons (×, X, Close, Dismiss), "Got it", "Accept", "No thanks" buttons
+- Common patterns: elements with role="dialog", role="tooltip", role="alertdialog", or aria-modal="true"
+- If you see such elements, DISMISS THEM FIRST by clicking close/dismiss buttons before proceeding
+- If a click seems to have no effect, check if an overlay appeared or is blocking the target
 
 For complex visual interactions (coordinate-based clicks, dragging) OR when you need to identify elements by visual attributes not present in the AX tree (e.g., "click the yellow button", "find the red error message"), use delegate_to_visual_agent with a clear instruction.
 
@@ -456,10 +571,39 @@ CRITICAL: When you have fully completed the user's task, you MUST call the compl
     let taskCompleted = false; // Track if complete_task was called
     let taskSummary = ''; // Store the summary from complete_task
 
-    // State carry-over to prevent stale element errors.
-    // Semantic tools (click, fill, etc.) return a snapshot of the NEW state.
-    // We must capture this and use it for the next turn instead of calling take_snapshot again.
-    let nextTurnState: string | null = null;
+    // Take initial snapshot and include it with the first message
+    try {
+      const client = await this.browserManager.getMcpClient();
+      const snapResult = await client.callTool('take_snapshot', {
+        verbose: false,
+      });
+      const snapContent = snapResult.content;
+      if (snapContent && Array.isArray(snapContent)) {
+        const initialSnapshot = snapContent
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((p: any) => p.type === 'text')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((p: any) => p.text || '')
+          .join('');
+        if (initialSnapshot) {
+          // Check for blocking overlays on initial load
+          const overlayCheck = detectBlockingOverlays(initialSnapshot);
+          if (overlayCheck.hasOverlay) {
+            debugLogger.log(
+              `Overlay detected on initial load: ${overlayCheck.overlayInfo}`,
+            );
+            currentInputParts.push({
+              text: `⚠️ BLOCKING OVERLAY DETECTED: ${overlayCheck.overlayInfo}\n${overlayCheck.suggestedAction}\nPlease dismiss this overlay before proceeding.`,
+            });
+          }
+          currentInputParts.push({
+            text: `<accessibility_tree>\n${initialSnapshot}\n</accessibility_tree>`,
+          });
+        }
+      }
+    } catch (e) {
+      debugLogger.log(`Warning: Failed to capture initial snapshot: ${e}`);
+    }
 
     while (iterationCount < MAX_ITERATIONS) {
       // Check for abort (following local-executor pattern)
@@ -469,63 +613,12 @@ CRITICAL: When you have fully completed the user's task, you MUST call the compl
         break;
       }
 
-      // Capture State
-      let domSnapshot = '';
-
-      if (nextTurnState) {
-        status = 'Using state from previous tool response...';
-        debugLogger.log(status);
-        domSnapshot = nextTurnState;
-        nextTurnState = null; // Consumed
-      } else {
-        status = 'Capturing state...';
-        debugLogger.log(status);
-
-        try {
-          const client = await this.browserManager.getMcpClient();
-
-          // 1. DOM Snapshot (Semantic Agent uses this)
-          const snapResult = await client.callTool('take_snapshot', {
-            verbose: false,
-          });
-          const snapContent = snapResult.content;
-          if (snapContent && Array.isArray(snapContent)) {
-            domSnapshot = snapContent
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .filter((p: any) => p.type === 'text')
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .map((p: any) => p.text || '')
-              .join('');
-          }
-        } catch (stateError) {
-          debugLogger.log(`Warning: State capture failed: ${stateError}`);
-        }
-
-        // Check if cancelled after state capture
-        if (signal.aborted) {
-          if (printOutput) printOutput('⚠️  Browser task cancelled');
-          debugLogger.log('Task cancelled during state capture');
-          break;
-        }
-      }
-
-      // Add State to Input Parts
-      const stateParts: Part[] = [];
-      if (domSnapshot) {
-        stateParts.push({
-          text: `<accessibility_tree>\n${domSnapshot}\n</accessibility_tree>`,
-        });
-      }
-      // Note: We only send DOM snapshot to the semantic agent.
-      // Screenshot is captured on-demand if delegation occurs.
-
-      // Combine previous tool outputs (if any) or initial prompt with state
-      // Put semantic state FIRST to avoid completion bias where the model just repeats the tree
-      const messageParts = [...stateParts, ...currentInputParts];
+      // The model manages its own state via take_snapshot tool.
+      // currentInputParts contains either the initial prompt+snapshot, or function responses from the previous turn.
+      const messageParts = [...currentInputParts];
 
       // Prepare for Model Call
-      const domSnapshotLen = domSnapshot ? domSnapshot.length : 0;
-      status = `[Turn ${iterationCount + 1}/${MAX_ITERATIONS}] Calling model (${messageParts.length} parts, DOM: ${Math.round(domSnapshotLen / 1024)}KB)...`;
+      status = `[Turn ${iterationCount + 1}/${MAX_ITERATIONS}] Calling model (${messageParts.length} parts)...`;
       debugLogger.log(status);
 
       // Call Model with Streaming
@@ -711,6 +804,15 @@ CRITICAL: When you have fully completed the user's task, you MUST call the compl
                     )
                   ).content || [];
                 break;
+              case 'hover':
+                rawContent =
+                  (
+                    await client.callTool(
+                      'hover',
+                      fnArgs as unknown as Record<string, unknown>,
+                    )
+                  ).content || [];
+                break;
               case 'fill':
                 rawContent =
                   (
@@ -803,13 +905,21 @@ CRITICAL: When you have fully completed the user's task, you MUST call the compl
                   ).content || [];
                 break;
 
+              case 'take_snapshot': {
+                const snapRes = await this.browserTools.takeSnapshot(
+                  (fnArgs['verbose'] as boolean) ?? false,
+                );
+                // Return the actual snapshot so the model can use it
+                functionResponse = snapRes.output || snapRes.error || '';
+                break;
+              }
+
               case 'complete_task': {
                 taskCompleted = true;
                 const summary =
                   (fnArgs['summary'] as string) || 'Task completed';
                 taskSummary = summary; // Store summary to return
                 functionResponse = summary;
-                nextTurnState = null;
                 if (printOutput) printOutput(`✅ ${summary}`);
                 break;
               }
@@ -819,10 +929,10 @@ CRITICAL: When you have fully completed the user's task, you MUST call the compl
                 const visualRes = await this.runVisualDelegate(
                   (fnArgs['instruction'] as string) || '',
                   screen,
+                  signal,
                   printOutput || (() => {}),
                 );
                 functionResponse = visualRes;
-                nextTurnState = null;
                 break;
               }
 
@@ -832,7 +942,24 @@ CRITICAL: When you have fully completed the user's task, you MUST call the compl
                   fnArgs['amount'] as number,
                 );
                 functionResponse = res.output || res.error || '';
-                nextTurnState = null;
+                break;
+              }
+
+              case 'pagedown': {
+                const res = await this.browserTools.pagedown();
+                functionResponse = res.output || res.error || '';
+                break;
+              }
+
+              case 'pageup': {
+                const res = await this.browserTools.pageup();
+                functionResponse = res.output || res.error || '';
+                break;
+              }
+
+              case 'open_web_browser': {
+                const res = await this.browserTools.openWebBrowser();
+                functionResponse = res.output || res.error || '';
                 break;
               }
 
@@ -841,11 +968,12 @@ CRITICAL: When you have fully completed the user's task, you MUST call the compl
                 functionResponse = `Error: Tool ${fnName} not recognized or supported directly.`;
             }
 
-            // Post-process for Semantic Tools
+            // Post-process for Semantic Tools - extract text from MCP response
             if (
               [
                 'navigate',
                 'click',
+                'hover',
                 'fill',
                 'fill_form',
                 'get_element_text',
@@ -856,17 +984,9 @@ CRITICAL: When you have fully completed the user's task, you MUST call the compl
                 'close_page',
               ].includes(fnName)
             ) {
-              // Extract snapshot
+              // Extract text response, strip any embedded snapshots (model can call take_snapshot if needed)
               const processed = processToolResponse(rawContent);
               functionResponse = processed.text;
-              if (processed.snapshot) {
-                nextTurnState = processed.snapshot;
-                debugLogger.log(
-                  `Captured state from tool ${fnName} for next turn.`,
-                );
-              } else {
-                nextTurnState = null; // Ensure we refetch if tool didn't return state
-              }
             } else if (!functionResponse && rawContent.length > 0) {
               // Fallback for tools that populated rawContent but weren't in the semantic list
               functionResponse = rawContent
@@ -876,7 +996,19 @@ CRITICAL: When you have fully completed the user's task, you MUST call the compl
             }
           } catch (error) {
             functionResponse = `Error executing ${fnName}: ${error instanceof Error ? error.message : String(error)}`;
-            nextTurnState = null; // On error, always refetch state
+          }
+
+          // Check for click blocked by overlay
+          if (
+            typeof functionResponse === 'string' &&
+            (functionResponse.includes('not interactable') ||
+              functionResponse.includes('obscured') ||
+              functionResponse.includes('intercept') ||
+              functionResponse.includes('blocked'))
+          ) {
+            debugLogger.log(`⚠️ Click may have been blocked by overlay`);
+            functionResponse +=
+              '\n\n⚠️ This action may have been blocked by an overlay, popup, or tooltip. Look for close/dismiss buttons in the accessibility tree and click them first.';
           }
 
           currentInputParts.push({
@@ -924,6 +1056,7 @@ CRITICAL: When you have fully completed the user's task, you MUST call the compl
   private async runVisualDelegate(
     instruction: string,
     initialScreenshot: string,
+    signal: AbortSignal,
     printOutput?: (message: string) => void,
   ): Promise<{ output: string }> {
     const visualModel =
@@ -938,7 +1071,7 @@ CRITICAL: When you have fully completed the user's task, you MUST call the compl
     // System instruction for Visual Agent
     const systemInstruction = `You are a Visual Delegate Agent. You have been delegated a specific task: "${instruction}".
 You have access to valid screenshot of the current state.
-You MUST perform the necessary actions (click_at, type_text_at, drag_and_drop, scroll_document) to fulfill the instruction.
+You MUST perform the necessary actions (click_at, type_text_at, drag_and_drop, scroll_document, press_key) to fulfill the instruction.
 If the element is not visible, use scroll_document to find it.
 Return a concise summary of your actions when done.
 `;
@@ -956,6 +1089,12 @@ Return a concise summary of your actions when done.
     contents.push({ role: 'user', parts: initialParts });
 
     for (let i = 0; i < VISUAL_MAX_STEPS; i++) {
+      // Check for abort signal
+      if (signal.aborted) {
+        if (printOutput) printOutput('⚠️  Visual agent cancelled');
+        return { output: 'Visual agent cancelled by user.' };
+      }
+
       const result = await this.generator.generateContent(
         {
           model: visualModel,
@@ -969,6 +1108,12 @@ Return a concise summary of your actions when done.
 
       const response = result.candidates?.[0]?.content;
       if (!response) break;
+
+      // Log visual agent turn to browser logs
+      const lastUserContent = contents[contents.length - 1];
+      if (lastUserContent) {
+        void this.logger.logFullTurn([lastUserContent], response);
+      }
 
       // Log visual agent thinking and actions
       if (printOutput) {
@@ -1094,23 +1239,20 @@ Return a concise summary of your actions when done.
         );
       }
 
-      // Capture new state for next visual turn
-      // We need a screenshot!
-      let newScreenshot = '';
+      // After executing all function calls, capture final screenshot and add as separate part
+      // (This is the updated state after all actions for this turn)
       try {
-        // Use captureScreenshot helper which now defaults to Playwright CSS scale
-        newScreenshot = await this.captureScreenshot();
+        const finalScreenshot = await this.captureScreenshot();
+        if (finalScreenshot) {
+          functionResponses.push({
+            inlineData: {
+              mimeType: 'image/png',
+              data: finalScreenshot,
+            },
+          });
+        }
       } catch {
         /* ignore */
-      }
-
-      if (newScreenshot) {
-        functionResponses.push({
-          inlineData: {
-            mimeType: 'image/png',
-            data: newScreenshot,
-          },
-        });
       }
 
       // Function responses are sent as 'user' role in the Gemini API
@@ -1128,7 +1270,7 @@ Return a concise summary of your actions when done.
     }
 
     return {
-      output: `Visual Agent reached max steps.\nActions Taken:\n${actionHistory.join('\n')}`,
+      output: `Visual Agent reached max steps WITHOUT completing the task. The task may be incomplete or requires more steps.\nActions Taken:\n${actionHistory.join('\n')}`,
     };
   }
 

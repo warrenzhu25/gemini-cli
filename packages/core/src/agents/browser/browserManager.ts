@@ -101,6 +101,8 @@ export class BrowserManager {
     try {
       this.browser = await chromium.launch({
         headless,
+        handleSIGINT: false,
+        handleSIGTERM: false,
         args: [`--remote-debugging-port=${port}`, '--window-size=1024,1024'],
       });
     } catch (error: unknown) {
@@ -139,7 +141,7 @@ export class BrowserManager {
       const browserUrl = `http://127.0.0.1:${port}`;
       const args = [
         '-y',
-        'chrome-devtools-mcp@latest',
+        'chrome-devtools-mcp@0.12.1',
         '--browser-url',
         browserUrl,
       ];
