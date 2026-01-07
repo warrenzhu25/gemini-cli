@@ -89,15 +89,17 @@ const createMockTextBufferState = (
     selectionAnchor: null,
     viewportWidth: 80,
     viewportHeight: 24,
+    transformationsByLine: lines.map(() => []),
     visualLayout: {
       visualLines: lines,
       logicalToVisualMap: lines.map((_, i) => [[i, 0]]),
       visualToLogicalMap: lines.map((_, i) => [i, 0]),
+      transformedToLogicalMaps: lines.map(() => []),
+      visualToTransformedMap: [],
     },
     ...partial,
   };
 };
-
 // Test constants
 const TEST_SEQUENCES = {
   ESCAPE: createKey({ sequence: '\u001b', name: 'escape' }),
@@ -214,6 +216,10 @@ describe('useVim hook', () => {
       vimDeleteCharBefore: vi.fn(),
       vimToggleCase: vi.fn(),
       vimDeleteToLineStart: vi.fn(),
+      // Additional properties for transformations
+      transformedToLogicalMaps: lines.map(() => []),
+      visualToTransformedMap: [],
+      transformationsByLine: lines.map(() => []),
     };
   };
 

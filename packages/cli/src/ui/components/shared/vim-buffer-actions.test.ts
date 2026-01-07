@@ -13,6 +13,8 @@ const defaultVisualLayout: VisualLayout = {
   visualLines: [''],
   logicalToVisualMap: [[[0, 0]]],
   visualToLogicalMap: [[0, 0]],
+  transformedToLogicalMaps: [[]],
+  visualToTransformedMap: [],
 };
 
 // Helper to create test state
@@ -31,6 +33,7 @@ const createTestState = (
   selectionAnchor: null,
   viewportWidth: 80,
   viewportHeight: 24,
+  transformationsByLine: [[]],
   visualLayout: defaultVisualLayout,
 });
 
