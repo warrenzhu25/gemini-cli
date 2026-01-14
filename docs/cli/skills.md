@@ -1,8 +1,9 @@
 # Agent Skills
 
-_Note: This is an experimental feature enabled via `experimental.skills`. You
-can also search for "Skills" within the `/settings` interactive UI to toggle
-this and manage other skill-related settings._
+_Note: This is an experimental feature introduced in version **0.24.0** and
+enabled via `experimental.skills`. You can also search for "Skills" within the
+`/settings` interactive UI to toggle this and manage other skill-related
+settings._
 
 Agent Skills allow you to extend Gemini CLI with specialized expertise,
 procedural workflows, and task-specific resources. Based on the
