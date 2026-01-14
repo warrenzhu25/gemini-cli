@@ -20,6 +20,7 @@ import {
   isFunctionResponse,
 } from '../../utils/messageInspectors.js';
 import { debugLogger } from '../../utils/debugLogger.js';
+import { FatalCancellationError } from '../../utils/errors.js';
 
 // The number of recent history turns to provide to the router for context.
 const HISTORY_TURNS_FOR_CONTEXT = 4;
@@ -182,6 +183,13 @@ export class ClassifierStrategy implements RoutingStrategy {
         },
       };
     } catch (error) {
+      if (
+        context.signal.aborted ||
+        error instanceof FatalCancellationError ||
+        (error instanceof Error && error.name === 'FatalCancellationError')
+      ) {
+        throw error;
+      }
       // If the classifier fails for any reason (API error, parsing error, etc.),
       // we log it and return null to allow the composite strategy to proceed.
       debugLogger.warn(`[Routing] ClassifierStrategy failed:`, error);
