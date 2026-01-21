@@ -248,13 +248,7 @@ describe('RipGrepTool', () => {
   let ripgrepBinaryPath: string;
   let grepTool: RipGrepTool;
   const abortSignal = new AbortController().signal;
-
-  const mockConfig = {
-    getTargetDir: () => tempRootDir,
-    getWorkspaceContext: () => createMockWorkspaceContext(tempRootDir),
-    getDebugMode: () => false,
-    getFileFilteringRespectGeminiIgnore: () => true,
-  } as unknown as Config;
+  let mockConfig: Config;
 
   beforeEach(async () => {
     downloadRipGrepMock.mockReset();
@@ -268,6 +262,42 @@ describe('RipGrepTool', () => {
     await fs.writeFile(ripgrepBinaryPath, '');
     storageSpy.mockImplementation(() => binDir);
     tempRootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'grep-tool-root-'));
+
+    mockConfig = {
+      getTargetDir: () => tempRootDir,
+      getWorkspaceContext: () => createMockWorkspaceContext(tempRootDir),
+      getDebugMode: () => false,
+      getFileFilteringRespectGeminiIgnore: () => true,
+      storage: {
+        getProjectTempDir: vi.fn().mockReturnValue('/tmp/project'),
+      },
+      isPathAllowed(this: Config, absolutePath: string): boolean {
+        const workspaceContext = this.getWorkspaceContext();
+        if (workspaceContext.isPathWithinWorkspace(absolutePath)) {
+          return true;
+        }
+
+        const projectTempDir = this.storage.getProjectTempDir();
+        const resolvedProjectTempDir = path.resolve(projectTempDir);
+        return (
+          absolutePath.startsWith(resolvedProjectTempDir + path.sep) ||
+          absolutePath === resolvedProjectTempDir
+        );
+      },
+      getValidationErrorForPath(
+        this: Config,
+        absolutePath: string,
+      ): string | null {
+        if (this.isPathAllowed(absolutePath)) {
+          return null;
+        }
+
+        const workspaceDirs = this.getWorkspaceContext().getDirectories();
+        const projectTempDir = this.storage.getProjectTempDir();
+        return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+      },
+    } as unknown as Config;
+
     grepTool = new RipGrepTool(mockConfig, createMockMessageBus());
 
     // Create some test files and directories
@@ -313,17 +343,19 @@ describe('RipGrepTool', () => {
         params: { pattern: 'hello', dir_path: '.', include: '*.txt' },
         expected: null,
       },
-      {
-        name: 'invalid regex pattern',
-        params: { pattern: '[[' },
-        expected: null,
-      },
     ])(
       'should return null for valid params ($name)',
       ({ params, expected }) => {
         expect(grepTool.validateToolParams(params)).toBe(expected);
       },
     );
+
+    it('should return error for invalid regex pattern', () => {
+      const params: RipGrepToolParams = { pattern: '[[' };
+      expect(grepTool.validateToolParams(params)).toMatch(
+        /Invalid regular expression pattern provided/,
+      );
+    });
 
     it('should return error if pattern is missing', () => {
       const params = { dir_path: '.' } as unknown as RipGrepToolParams;
@@ -338,10 +370,9 @@ describe('RipGrepTool', () => {
         dir_path: 'nonexistent',
       };
       // Check for the core error message, as the full path might vary
-      expect(grepTool.validateToolParams(params)).toContain(
-        'Path does not exist',
-      );
-      expect(grepTool.validateToolParams(params)).toContain('nonexistent');
+      const result = grepTool.validateToolParams(params);
+      expect(result).toMatch(/Path does not exist/);
+      expect(result).toMatch(/nonexistent/);
     });
 
     it('should allow path to be a file', async () => {
@@ -549,19 +580,10 @@ describe('RipGrepTool', () => {
       expect(result.returnDisplay).toBe('No matches found');
     });
 
-    it('should return an error from ripgrep for invalid regex pattern', async () => {
-      mockSpawn.mockImplementationOnce(
-        createMockSpawn({
-          exitCode: 2,
-        }),
-      );
-
+    it('should throw error for invalid regex pattern during build', async () => {
       const params: RipGrepToolParams = { pattern: '[[' };
-      const invocation = grepTool.build(params);
-      const result = await invocation.execute(abortSignal);
-      expect(result.llmContent).toContain('ripgrep exited with code 2');
-      expect(result.returnDisplay).toContain(
-        'Error: ripgrep exited with code 2',
+      expect(() => grepTool.build(params)).toThrow(
+        /Invalid regular expression pattern provided/,
       );
     });
 
@@ -738,6 +760,34 @@ describe('RipGrepTool', () => {
           createMockWorkspaceContext(tempRootDir, [secondDir]),
         getDebugMode: () => false,
         getFileFilteringRespectGeminiIgnore: () => true,
+        storage: {
+          getProjectTempDir: vi.fn().mockReturnValue('/tmp/project'),
+        },
+        isPathAllowed(this: Config, absolutePath: string): boolean {
+          const workspaceContext = this.getWorkspaceContext();
+          if (workspaceContext.isPathWithinWorkspace(absolutePath)) {
+            return true;
+          }
+
+          const projectTempDir = this.storage.getProjectTempDir();
+          const resolvedProjectTempDir = path.resolve(projectTempDir);
+          return (
+            absolutePath.startsWith(resolvedProjectTempDir + path.sep) ||
+            absolutePath === resolvedProjectTempDir
+          );
+        },
+        getValidationErrorForPath(
+          this: Config,
+          absolutePath: string,
+        ): string | null {
+          if (this.isPathAllowed(absolutePath)) {
+            return null;
+          }
+
+          const workspaceDirs = this.getWorkspaceContext().getDirectories();
+          const projectTempDir = this.storage.getProjectTempDir();
+          return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+        },
       } as unknown as Config;
 
       // Setup specific mock for this test - multi-directory search for 'world'
@@ -883,6 +933,34 @@ describe('RipGrepTool', () => {
           createMockWorkspaceContext(tempRootDir, [secondDir]),
         getDebugMode: () => false,
         getFileFilteringRespectGeminiIgnore: () => true,
+        storage: {
+          getProjectTempDir: vi.fn().mockReturnValue('/tmp/project'),
+        },
+        isPathAllowed(this: Config, absolutePath: string): boolean {
+          const workspaceContext = this.getWorkspaceContext();
+          if (workspaceContext.isPathWithinWorkspace(absolutePath)) {
+            return true;
+          }
+
+          const projectTempDir = this.storage.getProjectTempDir();
+          const resolvedProjectTempDir = path.resolve(projectTempDir);
+          return (
+            absolutePath.startsWith(resolvedProjectTempDir + path.sep) ||
+            absolutePath === resolvedProjectTempDir
+          );
+        },
+        getValidationErrorForPath(
+          this: Config,
+          absolutePath: string,
+        ): string | null {
+          if (this.isPathAllowed(absolutePath)) {
+            return null;
+          }
+
+          const workspaceDirs = this.getWorkspaceContext().getDirectories();
+          const projectTempDir = this.storage.getProjectTempDir();
+          return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+        },
       } as unknown as Config;
 
       // Setup specific mock for this test - searching in 'sub' should only return matches from that directory
@@ -1662,6 +1740,34 @@ describe('RipGrepTool', () => {
         getWorkspaceContext: () => createMockWorkspaceContext(tempRootDir),
         getDebugMode: () => false,
         getFileFilteringRespectGeminiIgnore: () => true,
+        storage: {
+          getProjectTempDir: vi.fn().mockReturnValue('/tmp/project'),
+        },
+        isPathAllowed(this: Config, absolutePath: string): boolean {
+          const workspaceContext = this.getWorkspaceContext();
+          if (workspaceContext.isPathWithinWorkspace(absolutePath)) {
+            return true;
+          }
+
+          const projectTempDir = this.storage.getProjectTempDir();
+          const resolvedProjectTempDir = path.resolve(projectTempDir);
+          return (
+            absolutePath.startsWith(resolvedProjectTempDir + path.sep) ||
+            absolutePath === resolvedProjectTempDir
+          );
+        },
+        getValidationErrorForPath(
+          this: Config,
+          absolutePath: string,
+        ): string | null {
+          if (this.isPathAllowed(absolutePath)) {
+            return null;
+          }
+
+          const workspaceDirs = this.getWorkspaceContext().getDirectories();
+          const projectTempDir = this.storage.getProjectTempDir();
+          return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+        },
       } as unknown as Config;
       const geminiIgnoreTool = new RipGrepTool(
         configWithGeminiIgnore,
@@ -1702,6 +1808,34 @@ describe('RipGrepTool', () => {
         getWorkspaceContext: () => createMockWorkspaceContext(tempRootDir),
         getDebugMode: () => false,
         getFileFilteringRespectGeminiIgnore: () => false,
+        storage: {
+          getProjectTempDir: vi.fn().mockReturnValue('/tmp/project'),
+        },
+        isPathAllowed(this: Config, absolutePath: string): boolean {
+          const wc = this.getWorkspaceContext();
+          if (wc.isPathWithinWorkspace(absolutePath)) {
+            return true;
+          }
+
+          const projectTempDir = this.storage.getProjectTempDir();
+          const resolvedProjectTempDir = path.resolve(projectTempDir);
+          return (
+            absolutePath.startsWith(resolvedProjectTempDir + path.sep) ||
+            absolutePath === resolvedProjectTempDir
+          );
+        },
+        getValidationErrorForPath(
+          this: Config,
+          absolutePath: string,
+        ): string | null {
+          if (this.isPathAllowed(absolutePath)) {
+            return null;
+          }
+
+          const workspaceDirs = this.getWorkspaceContext().getDirectories();
+          const projectTempDir = this.storage.getProjectTempDir();
+          return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+        },
       } as unknown as Config;
       const geminiIgnoreTool = new RipGrepTool(
         configWithoutGeminiIgnore,
@@ -1827,6 +1961,34 @@ describe('RipGrepTool', () => {
         getWorkspaceContext: () =>
           createMockWorkspaceContext(tempRootDir, ['/another/dir']),
         getDebugMode: () => false,
+        storage: {
+          getProjectTempDir: vi.fn().mockReturnValue('/tmp/project'),
+        },
+        isPathAllowed(this: Config, absolutePath: string): boolean {
+          const wc = this.getWorkspaceContext();
+          if (wc.isPathWithinWorkspace(absolutePath)) {
+            return true;
+          }
+
+          const projectTempDir = this.storage.getProjectTempDir();
+          const resolvedProjectTempDir = path.resolve(projectTempDir);
+          return (
+            absolutePath.startsWith(resolvedProjectTempDir + path.sep) ||
+            absolutePath === resolvedProjectTempDir
+          );
+        },
+        getValidationErrorForPath(
+          this: Config,
+          absolutePath: string,
+        ): string | null {
+          if (this.isPathAllowed(absolutePath)) {
+            return null;
+          }
+
+          const workspaceDirs = this.getWorkspaceContext().getDirectories();
+          const projectTempDir = this.storage.getProjectTempDir();
+          return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+        },
       } as unknown as Config;
 
       const multiDirGrepTool = new RipGrepTool(
