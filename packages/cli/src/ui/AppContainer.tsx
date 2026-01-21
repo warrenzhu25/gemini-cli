@@ -1059,9 +1059,9 @@ Logging in with Google... Restarting Gemini CLI to continue.
   }, []);
   const shouldShowIdePrompt = Boolean(
     currentIDE &&
-    !config.getIdeMode() &&
-    !settings.merged.ide.hasSeenNudge &&
-    !idePromptAnswered,
+      !config.getIdeMode() &&
+      !settings.merged.ide.hasSeenNudge &&
+      !idePromptAnswered,
   );
 
   const [showErrorDetails, setShowErrorDetails] = useState<boolean>(false);
