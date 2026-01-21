@@ -291,7 +291,7 @@ describe('RipGrepTool', () => {
 
         const workspaceDirs = this.getWorkspaceContext().getDirectories();
         const projectTempDir = this.storage.getProjectTempDir();
-        return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+        return `Path not in workspace: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
       },
     } as unknown as Config;
 
@@ -779,7 +779,7 @@ describe('RipGrepTool', () => {
 
           const workspaceDirs = this.getWorkspaceContext().getDirectories();
           const projectTempDir = this.storage.getProjectTempDir();
-          return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+          return `Path not in workspace: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
         },
       } as unknown as Config;
 
@@ -948,7 +948,7 @@ describe('RipGrepTool', () => {
 
           const workspaceDirs = this.getWorkspaceContext().getDirectories();
           const projectTempDir = this.storage.getProjectTempDir();
-          return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+          return `Path not in workspace: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
         },
       } as unknown as Config;
 
@@ -1090,7 +1090,7 @@ describe('RipGrepTool', () => {
         pattern: 'test',
         dir_path: '../outside',
       };
-      expect(() => grepTool.build(params)).toThrow(/Path validation failed/);
+      expect(() => grepTool.build(params)).toThrow(/Path not in workspace/);
     });
 
     it.each([
@@ -1751,7 +1751,7 @@ describe('RipGrepTool', () => {
 
           const workspaceDirs = this.getWorkspaceContext().getDirectories();
           const projectTempDir = this.storage.getProjectTempDir();
-          return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+          return `Path not in workspace: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
         },
       } as unknown as Config;
       const geminiIgnoreTool = new RipGrepTool(
@@ -1815,7 +1815,7 @@ describe('RipGrepTool', () => {
 
           const workspaceDirs = this.getWorkspaceContext().getDirectories();
           const projectTempDir = this.storage.getProjectTempDir();
-          return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+          return `Path not in workspace: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
         },
       } as unknown as Config;
       const geminiIgnoreTool = new RipGrepTool(
@@ -1964,7 +1964,7 @@ describe('RipGrepTool', () => {
 
           const workspaceDirs = this.getWorkspaceContext().getDirectories();
           const projectTempDir = this.storage.getProjectTempDir();
-          return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+          return `Path not in workspace: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
         },
       } as unknown as Config;
 

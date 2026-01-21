@@ -163,7 +163,7 @@ describe('WriteFileTool', () => {
 
         const workspaceDirs = this.getWorkspaceContext().getDirectories();
         const projectTempDir = this.storage.getProjectTempDir();
-        return `Path validation failed: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
+        return `Path not in workspace: Attempted path "${absolutePath}" resolves outside the allowed workspace directories: ${workspaceDirs.join(', ')} or the project temp directory: ${projectTempDir}`;
       },
     } as unknown as Config;
 
@@ -272,7 +272,7 @@ describe('WriteFileTool', () => {
         file_path: outsidePath,
         content: 'hello',
       };
-      expect(() => tool.build(params)).toThrow(/Path validation failed/);
+      expect(() => tool.build(params)).toThrow(/Path not in workspace/);
     });
 
     it('should throw an error if path is a directory', () => {
@@ -843,7 +843,7 @@ describe('WriteFileTool', () => {
         file_path: '/etc/passwd',
         content: 'malicious',
       };
-      expect(() => tool.build(params)).toThrow(/Path validation failed/);
+      expect(() => tool.build(params)).toThrow(/Path not in workspace/);
     });
   });
 
