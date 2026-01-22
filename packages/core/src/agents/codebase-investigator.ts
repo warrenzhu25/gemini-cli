@@ -47,8 +47,8 @@ export const CodebaseInvestigatorAgent: LocalAgentDefinition<
   name: 'codebase_investigator',
   kind: 'local',
   displayName: 'Codebase Investigator Agent',
-  description: `The specialized tool for codebase analysis, architectural mapping, and understanding system-wide dependencies.
-    Invoke this tool for tasks like vague requests, bug root-cause analysis, system refactoring, comprehensive feature implementation or to answer questions about the codebase that require investigation.
+  description: `The specialized tool for discovering code, understanding architectural implications, and identifying system-wide dependencies.
+    Invoke this tool for any task that requires locating relevant code, analyzing the impact of a change, performing bug root-cause analysis, or understanding multi-file relationships.
     It returns a structured report with key file paths, symbols, and actionable architectural insights.`,
   inputConfig: {
     inputs: {

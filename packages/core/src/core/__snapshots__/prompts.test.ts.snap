@@ -14,7 +14,7 @@ Once you have provided a final synthesis of your work, do not repeat yourself or
 # Workflow: Development
 Operate using a **Research -> Strategy -> Execution** lifecycle. For the Execution phase, resolve each sub-task through an iterative **Plan -> Act -> Validate** cycle.
 
-1. **Research:** Map the codebase and validate assumptions. Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
+1. **Research:** Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
 2. **Strategy:** Formulate a grounded plan. Share a concise summary of your strategy.
 3. **Execution:** For each sub-task:
   - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**
@@ -100,7 +100,7 @@ Once you have provided a final synthesis of your work, do not repeat yourself or
 # Workflow: Development
 Operate using a **Research -> Strategy -> Execution** lifecycle. For the Execution phase, resolve each sub-task through an iterative **Plan -> Act -> Validate** cycle.
 
-1. **Research:** Map the codebase and validate assumptions. Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
+1. **Research:** Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
 2. **Strategy:** Formulate a grounded plan. Share a concise summary of your strategy.
 3. **Execution:** For each sub-task:
   - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**
@@ -169,7 +169,7 @@ Once you have provided a final synthesis of your work, do not repeat yourself or
 # Workflow: Development
 Operate using a **Research -> Strategy -> Execution** lifecycle. For the Execution phase, resolve each sub-task through an iterative **Plan -> Act -> Validate** cycle.
 
-1. **Research:** Map the codebase and validate assumptions. For tasks involving multi-file navigation, architectural mapping, or identifying ripple effects, your primary action should be to delegate to the \`codebase_investigator\` agent. It is optimized to build a comprehensive mental model faster and more accurately than manual searching. Manual search tools (e.g., \`search_file_content\`) are preferred only for highly localized verification or if the codebase is small enough that the solution is immediately obvious. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
+1. **Research:** Systematically map the codebase and validate assumptions. For any task that requires discovering relevant code, understanding architectural implications, or identifying side effects (e.g., refactors, feature additions, or bug fixes), your primary action should be to delegate to the \`codebase_investigator\` agent. It is the expert tool for high-fidelity discovery and is optimized to build a comprehensive mental model faster than manual searching. Reserve manual search tools (e.g., \`search_file_content\`) for trivial, highly localized verification or if the codebase is so small that delegation adds unnecessary latency. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
 2. **Strategy:** Formulate a grounded plan. Share a concise summary of your strategy.
 3. **Execution:** For each sub-task:
   - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**
@@ -238,7 +238,7 @@ Once you have provided a final synthesis of your work, do not repeat yourself or
 # Workflow: Development
 Operate using a **Research -> Strategy -> Execution** lifecycle. For the Execution phase, resolve each sub-task through an iterative **Plan -> Act -> Validate** cycle.
 
-1. **Research:** Map the codebase and validate assumptions. Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
+1. **Research:** Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
 2. **Strategy:** Formulate a grounded plan. Share a concise summary of your strategy.
 3. **Execution:** For each sub-task:
   - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**
@@ -317,7 +317,7 @@ Once you have provided a final synthesis of your work, do not repeat yourself or
 # Workflow: Development
 Operate using a **Research -> Strategy -> Execution** lifecycle. For the Execution phase, resolve each sub-task through an iterative **Plan -> Act -> Validate** cycle.
 
-1. **Research:** Map the codebase and validate assumptions. Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
+1. **Research:** Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
 2. **Strategy:** Formulate a grounded plan. Share a concise summary of your strategy.
 3. **Execution:** For each sub-task:
   - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**
@@ -388,7 +388,7 @@ Once you have provided a final synthesis of your work, do not repeat yourself or
 # Workflow: Development
 Operate using a **Research -> Strategy -> Execution** lifecycle. For the Execution phase, resolve each sub-task through an iterative **Plan -> Act -> Validate** cycle.
 
-1. **Research:** Map the codebase and validate assumptions. Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
+1. **Research:** Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
 2. **Strategy:** Formulate a grounded plan. Share a concise summary of your strategy.
 3. **Execution:** For each sub-task:
   - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**
@@ -459,7 +459,7 @@ Once you have provided a final synthesis of your work, do not repeat yourself or
 # Workflow: Development
 Operate using a **Research -> Strategy -> Execution** lifecycle. For the Execution phase, resolve each sub-task through an iterative **Plan -> Act -> Validate** cycle.
 
-1. **Research:** Map the codebase and validate assumptions. Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
+1. **Research:** Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
 2. **Strategy:** Formulate a grounded plan. Share a concise summary of your strategy.
 3. **Execution:** For each sub-task:
   - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**
@@ -528,7 +528,7 @@ Once you have provided a final synthesis of your work, do not repeat yourself or
 # Workflow: Development
 Operate using a **Research -> Strategy -> Execution** lifecycle. For the Execution phase, resolve each sub-task through an iterative **Plan -> Act -> Validate** cycle.
 
-1. **Research:** Map the codebase and validate assumptions. Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
+1. **Research:** Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
 2. **Strategy:** Formulate a grounded plan. Share a concise summary of your strategy.
 3. **Execution:** For each sub-task:
   - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**
@@ -597,7 +597,7 @@ Once you have provided a final synthesis of your work, do not repeat yourself or
 # Workflow: Development
 Operate using a **Research -> Strategy -> Execution** lifecycle. For the Execution phase, resolve each sub-task through an iterative **Plan -> Act -> Validate** cycle.
 
-1. **Research:** Map the codebase and validate assumptions. Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
+1. **Research:** Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
 2. **Strategy:** Formulate a grounded plan. Share a concise summary of your strategy.
 3. **Execution:** For each sub-task:
   - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**
@@ -666,7 +666,7 @@ Once you have provided a final synthesis of your work, do not repeat yourself or
 # Workflow: Development
 Operate using a **Research -> Strategy -> Execution** lifecycle. For the Execution phase, resolve each sub-task through an iterative **Plan -> Act -> Validate** cycle.
 
-1. **Research:** Map the codebase and validate assumptions. Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
+1. **Research:** Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
 2. **Strategy:** Formulate a grounded plan. Share a concise summary of your strategy.
 3. **Execution:** For each sub-task:
   - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**
@@ -735,7 +735,7 @@ Once you have provided a final synthesis of your work, do not repeat yourself or
 # Workflow: Development
 Operate using a **Research -> Strategy -> Execution** lifecycle. For the Execution phase, resolve each sub-task through an iterative **Plan -> Act -> Validate** cycle.
 
-1. **Research:** Map the codebase and validate assumptions. Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
+1. **Research:** Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
 2. **Strategy:** Formulate a grounded plan. Share a concise summary of your strategy.
 3. **Execution:** For each sub-task:
   - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**
@@ -804,7 +804,7 @@ Once you have provided a final synthesis of your work, do not repeat yourself or
 # Workflow: Development
 Operate using a **Research -> Strategy -> Execution** lifecycle. For the Execution phase, resolve each sub-task through an iterative **Plan -> Act -> Validate** cycle.
 
-1. **Research:** Map the codebase and validate assumptions. Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
+1. **Research:** Systematically map the codebase and validate assumptions. Use search tools in parallel to understand dependencies, patterns, and conventions. Use \`read_file\` to validate all assumptions. **Prioritize empirical reproduction of reported issues to confirm the failure state.**
 2. **Strategy:** Formulate a grounded plan. Share a concise summary of your strategy.
 3. **Execution:** For each sub-task:
   - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**

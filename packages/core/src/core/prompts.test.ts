@@ -238,11 +238,11 @@ describe('Core System Prompt (prompts.ts)', () => {
       const prompt = getCoreSystemPrompt(testConfig, mockEnv);
       if (expectCodebaseInvestigator) {
         expect(prompt).toContain(
-          `For tasks involving multi-file navigation, architectural mapping, or identifying ripple effects, your primary action should be to delegate to the \`${CodebaseInvestigatorAgent.name}\` agent.`,
+          `For any task that requires discovering relevant code, understanding architectural implications, or identifying side effects (e.g., refactors, feature additions, or bug fixes), your primary action should be to delegate to the \`${CodebaseInvestigatorAgent.name}\` agent.`,
         );
       } else {
         expect(prompt).not.toContain(
-          `For tasks involving multi-file navigation, architectural mapping, or identifying ripple effects, your primary action should be to delegate to the \`${CodebaseInvestigatorAgent.name}\` agent.`,
+          `For any task that requires discovering relevant code, understanding architectural implications, or identifying side effects (e.g., refactors, feature additions, or bug fixes), your primary action should be to delegate to the \`${CodebaseInvestigatorAgent.name}\` agent.`,
         );
       }
       expect(prompt).toMatchSnapshot();

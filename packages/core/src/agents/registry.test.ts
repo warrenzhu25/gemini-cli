@@ -906,7 +906,7 @@ describe('AgentRegistry', () => {
       );
       expect(context).toContain('For example:');
       expect(context).toContain(
-        "- Prompt: 'Fix test', Description: 'An agent with expertise in fixing tests.' -> should use the sub-agent.",
+        "- Prompt: 'Change the telemetry system to use the new analytics provider', Description: 'An agent for discovering code and its implications.' -> should use the sub-agent.",
       );
       expect(context).toContain('<available_sub_agents>');
       expect(context).toContain('<sub_agent>');

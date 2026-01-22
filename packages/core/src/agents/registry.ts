@@ -477,7 +477,7 @@ Sub-agents are specialized expert agents that you can use to assist you in the c
 For example:
 - Prompt: 'Fix test', Description: 'An agent with expertise in fixing tests.' -> should use the sub-agent.
 - Prompt: 'Update the license header', Description: 'An agent with expertise in licensing and copyright.' -> should use the sub-agent.
-- Prompt: 'Diagram the architecture of the codebase', Description: 'Agent with architecture experience'. -> should use the sub-agent.
+- Prompt: 'Change the telemetry system to use the new analytics provider', Description: 'An agent for discovering code and its implications.' -> should use the sub-agent.
 - Prompt: 'Implement a fix for [bug]' -> Should decompose the project into subtasks, which may utilize available agents like 'plan', 'validate', and 'fix-tests'.
 
 <available_sub_agents>
