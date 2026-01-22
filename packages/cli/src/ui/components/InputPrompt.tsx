@@ -1107,7 +1107,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
         </Text>
         <Box flexGrow={1} flexDirection="column" ref={innerBoxRef}>
           {buffer.text.length === 0 && placeholder ? (
-            <Text terminalCursorFocus={showCursor} terminalCursorPosition={0}>
+            <Text terminalCursorFocus={showCursor} terminalCursorPosition={1}>
               {showCursor ? (
                 <Text>
                   {chalk.inverse(placeholder.slice(0, 1))}
@@ -1225,11 +1225,18 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
                   cursorVisualColAbsolute === cpLen(lineText) &&
                   currentLineGhost;
 
+                const isAtEndOfLine =
+                  cursorVisualColAbsolute === cpLen(lineText);
+                const imePosition =
+                  isOnCursorLine && isAtEndOfLine
+                    ? cursorVisualColAbsolute + 1
+                    : cursorVisualColAbsolute;
+
                 return (
                   <Box key={`line-${visualIdxInRenderedSet}`} height={1}>
                     <Text
                       terminalCursorFocus={showCursor && isOnCursorLine}
-                      terminalCursorPosition={cursorVisualColAbsolute}
+                      terminalCursorPosition={imePosition}
                     >
                       {renderedLine}
                       {showCursorBeforeGhost &&
