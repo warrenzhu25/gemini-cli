@@ -51,13 +51,16 @@ export const CodebaseInvestigatorAgent: LocalAgentDefinition<
     Invoke this tool for any task that requires locating relevant code, analyzing the impact of a change, performing bug root-cause analysis, or understanding multi-file relationships.
     It returns a structured report with key file paths, symbols, and actionable architectural insights.`,
   inputConfig: {
-    inputs: {
-      objective: {
-        description: `A comprehensive and detailed description of the user's ultimate goal.
+    inputSchema: {
+      type: 'object',
+      properties: {
+        objective: {
+          type: 'string',
+          description: `A comprehensive and detailed description of the user's ultimate goal.
           You must include original user's objective as well as questions and any extra context and questions you may have.`,
-        type: 'string',
-        required: true,
+        },
       },
+      required: ['objective'],
     },
   },
   outputConfig: {
